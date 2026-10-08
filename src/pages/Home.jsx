@@ -19,10 +19,9 @@ export default function Home() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3 text-blue-800 text-sm">
           <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold">Project Showcase - Part 1 Prototype:</span>{" "}
-            This stage implements the student data intake interface, academic metrics collection,
-            and college analytics dashboard. Machine Learning risk evaluation will be connected in
-            subsequent phases.
+            <span className="font-semibold">Project Showcase - Part 2 (Fullstack Integration):</span>{" "}
+            Student data intake is connected to an Express.js REST API and MongoDB database for permanent
+            storage and retrieval. Machine Learning risk evaluation will be connected in Part 3.
           </div>
         </div>
       </div>

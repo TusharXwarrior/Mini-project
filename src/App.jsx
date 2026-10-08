@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import StudentForm from "./pages/StudentForm";
 import Result from "./pages/Result";
 import Dashboard from "./pages/Dashboard";
+import StudentDetails from "./pages/StudentDetails";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/student-form" element={<StudentForm />} />
             <Route path="/result" element={<Result />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/students/:id" element={<StudentDetails />} />
             {/* Fallback */}
             <Route
               path="*"
@@ -48,13 +50,14 @@ export default function App() {
               <span className="font-semibold text-slate-700">
                 AI-Based Student Dropout Prediction System
               </span>{" "}
-              — College Project Showcase (Part 1: Data Collection Prototype)
+              — College Project Showcase (Part 2: Express & MongoDB Integration)
             </div>
             <div className="flex items-center gap-4">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                Status: Frontend Prototype Ready
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                MongoDB Connected
               </span>
-              <span>Built with React + Vite + Tailwind CSS</span>
+              <span>Node.js • Express • React • Tailwind</span>
             </div>
           </div>
         </footer>

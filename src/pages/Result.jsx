@@ -8,11 +8,13 @@ import {
   ArrowRight, 
   PlusCircle, 
   LayoutDashboard, 
-  AlertCircle 
+  AlertCircle,
+  Database
 } from "lucide-react";
 
 export default function Result() {
   const student = getLatestSubmission();
+  const studentIdentifier = student?._id || student?.studentId || student?.id;
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-8">
@@ -25,7 +27,7 @@ export default function Result() {
           <div>
             <h1 className="text-xl font-bold text-emerald-950">Student Information Submitted</h1>
             <p className="text-xs text-emerald-800 mt-0.5">
-              Data successfully collected and recorded for the predictive evaluation pipeline.
+              Data successfully collected and saved to MongoDB for the predictive evaluation pipeline.
             </p>
           </div>
         </div>
@@ -54,9 +56,23 @@ export default function Result() {
             <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">
               Submitted Profile Overview
             </h2>
-            <span className="text-xs text-slate-400">
-              Recorded at: {student.submittedAt ? new Date(student.submittedAt).toLocaleTimeString() : "Recent"}
-            </span>
+            <div className="flex items-center gap-3">
+              {studentIdentifier && (
+                <Link
+                  to={`/students/${studentIdentifier}`}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                >
+                  <Database className="w-3 h-3" />
+                  View in MongoDB
+                </Link>
+              )}
+              <span className="text-xs text-slate-400">
+                Recorded:{" "}
+                {student.createdAt || student.submittedAt
+                  ? new Date(student.createdAt || student.submittedAt).toLocaleTimeString()
+                  : "Recent"}
+              </span>
+            </div>
           </div>
           <StudentCard student={student} />
         </section>
@@ -77,7 +93,7 @@ export default function Result() {
         </div>
       )}
 
-      {/* AI Prediction Placeholder Section (Requirement 4) */}
+      {/* AI Prediction Placeholder Section (Requirement 4 & 6) */}
       <section className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -93,7 +109,10 @@ export default function Result() {
           </div>
 
           {/* Prompt Required Badge: "ML Model: Not Connected" */}
-          <div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+              AI Prediction: Coming Soon
+            </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
               ML Model: Not Connected
@@ -110,9 +129,9 @@ export default function Result() {
             Prediction will appear here after connecting the Machine Learning model.
           </p>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            This prototype demonstrates Part 1 (Frontend & Data Collection). In subsequent parts,
-            this collected data profile will be passed to a trained classification algorithm (e.g.
-            Random Forest or Logistic Regression) to compute the dropout probability.
+            Student records are now permanently recorded in MongoDB through the Express backend. In
+            Part 3, the Machine Learning prediction algorithm will evaluate these attributes and
+            output the dropout risk classification.
           </p>
         </div>
 

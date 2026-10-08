@@ -1,20 +1,21 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { saveStudent } from "../data/students";
-import { AlertCircle, ArrowLeft, Sparkles } from "lucide-react";
+import { createStudent } from "../services/api";
+import { saveStudent as saveLocalBackup } from "../data/students";
+import { AlertCircle, ArrowLeft, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 
 export default function StudentForm() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    id: "",
+    studentId: "",
     name: "",
     age: "",
     gender: "Male",
     branch: "Computer Science",
     semester: "4th Semester",
     cgpa: "",
-    prevCgpa: "",
+    previousCgpa: "",
     backlogs: "",
     internalMarks: "",
     attendance: "",
@@ -25,17 +26,20 @@ export default function StudentForm() {
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const [serverSuccess, setServerSuccess] = useState("");
 
   const sampleStudents = [
     {
-      id: "STU-2024-101",
+      studentId: "STU-2024-101",
       name: "Harsh Vardhan",
       age: "20",
       gender: "Male",
       branch: "Computer Science",
       semester: "4th Semester",
       cgpa: "6.2",
-      prevCgpa: "6.5",
+      previousCgpa: "6.5",
       backlogs: "2",
       internalMarks: "32",
       attendance: "68",
@@ -45,14 +49,14 @@ export default function StudentForm() {
       feeStatus: "Pending",
     },
     {
-      id: "STU-2024-102",
+      studentId: "STU-2024-102",
       name: "Priyanka Sen",
       age: "19",
       gender: "Female",
       branch: "Information Technology",
       semester: "3rd Semester",
       cgpa: "8.9",
-      prevCgpa: "8.7",
+      previousCgpa: "8.7",
       backlogs: "0",
       internalMarks: "46",
       attendance: "94",
@@ -64,14 +68,18 @@ export default function StudentForm() {
   ];
 
   const handleFillSample = (index = 0) => {
-    setFormData(sampleStudents[index]);
+    // Generate unique ID with random suffix to avoid duplicate key errors during repeated testing
+    const sample = { ...sampleStudents[index] };
+    sample.studentId = `STU-DEMO-${Math.floor(100 + Math.random() * 900)}`;
+    setFormData(sample);
     setErrors({});
+    setServerError("");
+    setServerSuccess("");
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error for that field
     if (errors[name]) {
       setErrors((prev) => {
         const copy = { ...prev };
@@ -79,13 +87,14 @@ export default function StudentForm() {
         return copy;
       });
     }
+    setServerError("");
   };
 
   const validate = () => {
     const errs = {};
 
     // 1. Personal Details
-    if (!formData.id.trim()) errs.id = "Student ID is required";
+    if (!formData.studentId.trim()) errs.studentId = "Student ID is required";
     if (!formData.name.trim()) errs.name = "Student Name is required";
     if (!formData.age) {
       errs.age = "Age is required";
@@ -103,12 +112,12 @@ export default function StudentForm() {
       }
     }
 
-    if (formData.prevCgpa === "" || formData.prevCgpa === undefined) {
-      errs.prevCgpa = "Previous CGPA is required";
+    if (formData.previousCgpa === "" || formData.previousCgpa === undefined) {
+      errs.previousCgpa = "Previous CGPA is required";
     } else {
-      const val = Number(formData.prevCgpa);
+      const val = Number(formData.previousCgpa);
       if (isNaN(val) || val < 0 || val > 10) {
-        errs.prevCgpa = "Previous CGPA must be between 0.0 and 10.0";
+        errs.previousCgpa = "Previous CGPA must be between 0.0 and 10.0";
       }
     }
 
@@ -140,7 +149,10 @@ export default function StudentForm() {
       }
     }
 
-    if (formData.assignmentCompletion === "" || formData.assignmentCompletion === undefined) {
+    if (
+      formData.assignmentCompletion === "" ||
+      formData.assignmentCompletion === undefined
+    ) {
       errs.assignmentCompletion = "Assignment completion percentage is required";
     } else {
       const val = Number(formData.assignmentCompletion);
@@ -161,26 +173,29 @@ export default function StudentForm() {
     return errs;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
+    setServerError("");
+    setServerSuccess("");
 
+    const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
-    // Format student object
-    const studentRecord = {
-      id: formData.id.trim(),
+    setIsSubmitting(true);
+
+    const payload = {
+      studentId: formData.studentId.trim(),
       name: formData.name.trim(),
       age: Number(formData.age),
       gender: formData.gender,
       branch: formData.branch,
       semester: formData.semester,
       cgpa: Number(formData.cgpa),
-      prevCgpa: Number(formData.prevCgpa),
+      previousCgpa: Number(formData.previousCgpa),
       backlogs: Number(formData.backlogs),
       internalMarks: Number(formData.internalMarks),
       attendance: Number(formData.attendance),
@@ -188,11 +203,35 @@ export default function StudentForm() {
       classesMissed: Number(formData.classesMissed),
       scholarship: formData.scholarship,
       feeStatus: formData.feeStatus,
-      submittedAt: new Date().toISOString(),
     };
 
-    saveStudent(studentRecord);
-    navigate("/result");
+    try {
+      // POST /api/students via Axios
+      const res = await createStudent(payload);
+
+      if (res && res.success) {
+        setServerSuccess("Student data saved successfully.");
+
+        // Store latest submission for preview page
+        const savedStudent = res.data;
+        saveLocalBackup(savedStudent);
+
+        // Redirect to result page after brief acknowledgment
+        setTimeout(() => {
+          navigate("/result");
+        }, 1200);
+      } else {
+        setServerError("Unable to save student data. Please try again.");
+      }
+    } catch (err) {
+      console.error("API submission error:", err);
+      const backendMessage =
+        err.response?.data?.message || "Unable to save student data. Please try again.";
+      setServerError(backendMessage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -211,7 +250,7 @@ export default function StudentForm() {
             Student Data Intake Form
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Collect academic, attendance, and administrative parameters for future ML prediction.
+            Submit academic, attendance, and administrative records directly to the database.
           </p>
         </div>
 
@@ -238,7 +277,28 @@ export default function StudentForm() {
         </div>
       </div>
 
-      {/* Validation alert banner if errors exist */}
+      {/* Success Banner */}
+      {serverSuccess && (
+        <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm rounded-lg p-4 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <div className="font-semibold">{serverSuccess}</div>
+        </div>
+      )}
+
+      {/* Server Error Banner */}
+      {serverError && (
+        <div className="mb-6 bg-rose-50 border border-rose-200 text-rose-800 text-sm rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          <div>
+            <div className="font-semibold">{serverError}</div>
+            <p className="text-xs text-rose-600 mt-0.5">
+              Please check your values or verify that the backend server is reachable on port 5000.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Validation alert banner if client errors exist */}
       {Object.keys(errors).length > 0 && (
         <div className="mb-6 bg-rose-50 border border-rose-200 text-rose-800 text-sm rounded-lg p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
@@ -277,17 +337,19 @@ export default function StudentForm() {
               </label>
               <input
                 type="text"
-                name="id"
+                name="studentId"
                 placeholder="e.g. STU-2024-042"
-                value={formData.id}
+                value={formData.studentId}
                 onChange={handleChange}
                 className={`w-full px-3.5 py-2 rounded-lg text-sm border bg-white focus:outline-none focus:ring-2 transition ${
-                  errors.id
+                  errors.studentId
                     ? "border-rose-300 focus:ring-rose-200 bg-rose-50/20"
                     : "border-slate-300 focus:ring-blue-100 focus:border-blue-500"
                 }`}
               />
-              {errors.id && <p className="text-xs text-rose-600 mt-1">{errors.id}</p>}
+              {errors.studentId && (
+                <p className="text-xs text-rose-600 mt-1">{errors.studentId}</p>
+              )}
             </div>
 
             {/* Student Name */}
@@ -436,17 +498,19 @@ export default function StudentForm() {
                 step="0.01"
                 min="0"
                 max="10"
-                name="prevCgpa"
+                name="previousCgpa"
                 placeholder="e.g. 7.50"
-                value={formData.prevCgpa}
+                value={formData.previousCgpa}
                 onChange={handleChange}
                 className={`w-full px-3.5 py-2 rounded-lg text-sm border bg-white focus:outline-none focus:ring-2 transition ${
-                  errors.prevCgpa
+                  errors.previousCgpa
                     ? "border-rose-300 focus:ring-rose-200 bg-rose-50/20"
                     : "border-slate-300 focus:ring-blue-100 focus:border-blue-500"
                 }`}
               />
-              {errors.prevCgpa && <p className="text-xs text-rose-600 mt-1">{errors.prevCgpa}</p>}
+              {errors.previousCgpa && (
+                <p className="text-xs text-rose-600 mt-1">{errors.previousCgpa}</p>
+              )}
             </div>
 
             {/* Backlogs */}
@@ -533,7 +597,7 @@ export default function StudentForm() {
                   className={`w-full px-3.5 py-2 rounded-lg text-sm border bg-white focus:outline-none focus:ring-2 transition ${
                     errors.attendance
                       ? "border-rose-300 focus:ring-rose-200 bg-rose-50/20"
-                      : "border-slate-300 focus:ring-blue-100 focus:border-blue-500"
+                    : "border-slate-300 focus:ring-blue-100 focus:border-blue-500"
                   }`}
                 />
                 <span className="absolute right-3 top-2 text-xs font-medium text-slate-400">
@@ -692,14 +756,24 @@ export default function StudentForm() {
         {/* Submit Button */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
           <p className="text-xs text-slate-500">
-            <span className="font-semibold text-slate-700">Note:</span> Part 1 stores input records
-            locally. Prediction models will be linked in Part 2.
+            <span className="font-semibold text-slate-700">Storage:</span> Data is sent to the
+            Express REST API and saved permanently in MongoDB.
           </p>
           <button
             type="submit"
-            className="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow transition flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className={`w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow transition flex items-center justify-center gap-2 ${
+              isSubmitting ? "opacity-75 cursor-not-allowed" : ""
+            }`}
           >
-            Submit Student Data
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving to Database...
+              </>
+            ) : (
+              "Submit Student Data"
+            )}
           </button>
         </div>
       </form>

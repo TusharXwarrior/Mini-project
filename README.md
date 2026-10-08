@@ -1,111 +1,165 @@
-# AI-Based Student Dropout Prediction System (Part 1)
+# AI-Based Student Dropout Prediction System
 
 > **College Project Showcase Prototype**  
-> **Stage:** Part 1 — Frontend & Student Data Collection Interface  
-> **Status:** Completed & Functional
+> **Stage:** Part 2 — Fullstack Backend & Database Integration  
+> **Status:** Backend Connected & Live with MongoDB
 
 ---
 
 ## 📌 Project Overview
 
-This application serves as the data collection and institutional monitoring portal for an **AI-Based Student Dropout Prediction System**. 
+This application serves as the data collection, institutional monitoring, and student retention analytics portal for an **AI-Based Student Dropout Prediction System**.
 
-In this first stage (**Part 1**), the focus is solely on providing an intuitive, realistic, and responsive interface to collect key academic, attendance, and administrative indicators that influence student retention. Machine learning prediction models will be connected in subsequent parts.
+- **Part 1 (Frontend & Data Collection)**: Built the responsive React frontend, intake form with input boundary validations, and student profile preview.
+- **Part 2 (Backend & Database Integration)**: Built a REST API using Node.js, Express.js, and MongoDB with Mongoose to permanently store student records, manage student data, and display live database analytics.
+- **Part 3 (Upcoming)**: Machine Learning model training, inference pipeline, and AI dropout risk probability prediction.
 
 ---
 
 ## 🚀 Tech Stack
 
-- **React.js 19**: Component-based UI library
-- **Vite 8**: Modern build tool and development server
-- **Tailwind CSS 4**: Utility-first styling framework
-- **React Router DOM 7**: Client-side page routing
-- **Lucide React**: Clean and minimal educational icons
+### Frontend
+- **React.js 19**: Component architecture & hooks
+- **Vite 8**: Frontend build tool & HMR dev server
+- **Tailwind CSS 4**: Modern styling
+- **React Router DOM 7**: Client routing
+- **Axios**: HTTP client for REST API communication
+- **Lucide React**: Educational iconography
+
+### Backend
+- **Node.js**: Runtime environment
+- **Express.js**: RESTful web API framework
+- **MongoDB**: NoSQL document database
+- **Mongoose**: ODM library with strict schema validation
+- **dotenv**: Environment variable management
+- **CORS**: Cross-origin resource sharing configuration
 
 ---
 
 ## 📁 Project Structure
 
 ```
-src/
-├── components/
-│   ├── Navbar.jsx          # Top navigation bar with branding, routes & mobile menu
-│   └── StudentCard.jsx     # Reusable card component displaying student profiles
-├── pages/
-│   ├── Home.jsx            # Landing page with hero & 3 analytical pillars
-│   ├── Dashboard.jsx       # Analytics dashboard with metric cards & demo table
-│   ├── StudentForm.jsx     # 3-section student data intake form with validation
-│   └── Result.jsx          # Submitted record preview with ML: Not Connected badge
-├── data/
-│   └── students.js         # 10 fictional demo students & localStorage helpers
-├── App.jsx                 # Application routes & layout wrapper
-├── main.jsx                # Application root mounting
-└── index.css               # Tailwind CSS imports and base styles
+Mini project 02/
+├── backend/
+│   ├── models/
+│   │   └── Student.js          # Mongoose schema with validations
+│   ├── controllers/
+│   │   └── studentController.js # CRUD handlers & duplicate key checks
+│   ├── routes/
+│   │   └── studentRoutes.js    # Express route mappings
+│   ├── server.js               # Express application entry & MongoDB connection
+│   ├── .env                    # Environment variables (PORT, MONGODB_URI)
+│   ├── .env.example            # Environment template
+│   └── package.json            # Backend dependencies
+├── src/
+│   ├── components/
+│   │   ├── Navbar.jsx          # Header with branding & route navigation
+│   │   └── StudentCard.jsx     # Reusable student profile card
+│   ├── pages/
+│   │   ├── Home.jsx            # Landing page with system pillars
+│   │   ├── Dashboard.jsx       # Real-time dashboard connected to MongoDB
+│   │   ├── StudentForm.jsx     # Intake form posting to Express via Axios
+│   │   ├── StudentDetails.jsx  # Student details (/students/:id) from MongoDB
+│   │   └── Result.jsx          # Submission confirmation & status
+│   ├── services/
+│   │   └── api.js              # Centralized Axios API client
+│   ├── data/
+│   │   └── students.js         # Demo dataset & local fallback utilities
+│   ├── App.jsx                 # Route definitions including /students/:id
+│   ├── main.jsx                # Application root mounting
+│   └── index.css               # Tailwind CSS imports
+├── package.json                # Frontend dependencies
+└── vite.config.js              # Vite configuration with Tailwind plugin
 ```
 
 ---
 
-## 🧭 Application Flow
+## 📡 REST API Endpoints
 
-1. **Home (`/`)**:
-   - Hero header: *"Student Dropout Prediction System"*
-   - Subtitle: *"AI-powered early identification of students who may be at risk of dropping out."*
-   - CTA button: **Check Student Risk** → navigates directly to `/student-form`.
-   - 3 Feature Cards: **Academic Analysis**, **Attendance Monitoring**, and **Early Risk Detection**.
+Base URL: `http://localhost:5000/api`
 
-2. **Student Input Form (`/student-form`)**:
-   Divided into 3 clean, validated sections:
-   - **Personal Details**: Student ID, Name, Age, Gender, Course/Branch, Semester.
-   - **Academic Performance**: Current CGPA, Previous CGPA, Backlogs, Internal Marks.
-   - **Attendance & Other Factors**: Attendance %, Assignment Completion %, Classes Missed, Scholarship (Yes/No), Fee Status (Paid/Pending).
-   - Built-in validation rules (CGPA 0–10, Attendance 0–100%, non-negative values).
-   - Built-in demo auto-fill buttons for presentation convenience.
+| Method | Endpoint | Description | Response Codes |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Health check & MongoDB connection status | 200 |
+| `GET` | `/students` | Get all students from database (sorted by createdAt) | 200, 500 |
+| `POST` | `/students` | Create & validate a new student record | 201, 400, 409, 500 |
+| `GET` | `/students/:id` | Get single student by MongoDB `_id` or `studentId` | 200, 404, 500 |
+| `DELETE` | `/students/:id` | Delete student by MongoDB `_id` or `studentId` | 200, 404, 500 |
 
-3. **Result Preview (`/result`)**:
-   - Displays confirmation: *"Student Information Submitted"*.
-   - Renders the entered student profile in a clean `StudentCard`.
-   - Shows the placeholder:
-     - **AI Prediction**: *"Prediction will appear here after connecting the Machine Learning model."*
-     - Badge: `ML Model: Not Connected`.
-
-4. **Institutional Dashboard (`/dashboard`)**:
-   - Metric Cards:
-     - **Total Students**: `25`
-     - **Students Registered**: `18`
-     - **Prediction Status**: `Coming Soon`
-   - Student Table with columns:
-     `Student ID | Name | Branch | Semester | Attendance | CGPA`
-   - Pre-populated with 10 realistic fictional demo students.
+### Sample POST Request Body
+```json
+{
+  "studentId": "STU-2024-001",
+  "name": "Aarav Sharma",
+  "age": 20,
+  "gender": "Male",
+  "branch": "Computer Science",
+  "semester": "4th Semester",
+  "cgpa": 8.85,
+  "previousCgpa": 8.70,
+  "backlogs": 0,
+  "internalMarks": 44,
+  "attendance": 92,
+  "assignmentCompletion": 95,
+  "classesMissed": 6,
+  "scholarship": "Yes",
+  "feeStatus": "Paid"
+}
+```
 
 ---
 
 ## 💻 How to Run the Project
 
-### Prerequisites
-- Node.js (v18 or higher recommended)
-- npm
+### 1. MongoDB Setup
+Ensure MongoDB Server is running locally on port `27017`:
+- On Windows: Run `Get-Service MongoDB` in PowerShell (or start via Services).
+- Connection string in `backend/.env`: `mongodb://127.0.0.1:27017/student_dropout_db`
 
-### Installation & Execution
+### 2. Start the Backend Server
+```bash
+# In project root:
+npm --prefix backend start
 
-1. **Clone or navigate to the project directory**:
-   ```bash
-   cd "Mini project 02"
-   ```
+# Or navigate directly:
+cd backend
+npm install
+npm start
+```
+Backend will start on: `http://localhost:5000`
 
-2. **Install dependencies** (if not already installed):
-   ```bash
-   npm install
-   ```
+### 3. Start the Frontend Application
+In a separate terminal:
+```bash
+npm install
+npm run dev
+```
+Frontend will be live at: `http://localhost:5173`
 
-3. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
+---
 
-4. **Open in browser**:
-   Visit [http://localhost:5173](http://localhost:5173)
+## 🧭 Tested End-to-End User Flow
 
-5. **Build for production**:
-   ```bash
-   npm run build
-   ```
+1. Open `http://localhost:5173/` (Home page).
+2. Click **"Check Student Risk"** → navigates to `/student-form`.
+3. Submit student details or click **"Fill Demo"**:
+   - Form posts data to `POST http://localhost:5000/api/students` via Axios.
+   - Shows success notification: *"Student data saved successfully."*
+4. Automatically navigates to `/result` showing the submitted profile and the placeholder:
+   - `ML Model: Not Connected` / `AI Prediction: Coming Soon`.
+5. Open `/dashboard`:
+   - Live **Total Students** count loaded directly from MongoDB.
+   - Student records listed with real data: `Student ID | Student Name | Branch | Semester | CGPA | Attendance | Backlogs`.
+6. Click any student row or action icon → Opens `/students/:id`:
+   - Fetches the persistent record from MongoDB.
+   - Retains the clear `AI Prediction: Coming Soon` notice.
+7. Click **"Delete Student"** → Calls `DELETE /api/students/:id`, removes the document from MongoDB, and returns to Dashboard.
+
+---
+
+## 🔮 What Will Be Implemented in Part 3
+
+- **Machine Learning Model Integration**: Training a supervised classification model (e.g., Random Forest or Logistic Regression) using student training data.
+- **Prediction API Endpoint**: Creating `POST /api/predict` or attaching prediction inference directly to student records.
+- **Risk Calculation**: Generating risk scores (Low, Medium, High Risk) and percentage probability of dropout.
+- **Intervention Recommendations**: Visual indicators and early warning recommendations for academic advisors.

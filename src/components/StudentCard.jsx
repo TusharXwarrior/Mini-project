@@ -10,6 +10,10 @@ export default function StudentCard({ student }) {
     );
   }
 
+  const studentIdentifier = student.studentId || student.id || student._id || "N/A";
+  const prevCgpaValue =
+    student.previousCgpa !== undefined ? student.previousCgpa : student.prevCgpa;
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       {/* Header Banner */}
@@ -17,7 +21,7 @@ export default function StudentCard({ student }) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/30 text-blue-100 border border-blue-400/30 mb-1">
-              ID: {student.id}
+              ID: {studentIdentifier}
             </span>
             <h3 className="text-xl font-bold tracking-tight text-white">{student.name}</h3>
             <p className="text-sm text-blue-100">
@@ -44,7 +48,9 @@ export default function StudentCard({ student }) {
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
               <span className="text-xs text-slate-500 block">Current CGPA</span>
               <span className="text-lg font-bold text-slate-800">
-                {student.cgpa !== undefined ? Number(student.cgpa).toFixed(2) : "N/A"}
+                {student.cgpa !== undefined && student.cgpa !== null
+                  ? Number(student.cgpa).toFixed(2)
+                  : "N/A"}
               </span>
               <span className="text-xs text-slate-400 block mt-0.5">Scale: 0 - 10</span>
             </div>
@@ -52,7 +58,9 @@ export default function StudentCard({ student }) {
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
               <span className="text-xs text-slate-500 block">Prev. Sem CGPA</span>
               <span className="text-lg font-bold text-slate-800">
-                {student.prevCgpa !== undefined ? Number(student.prevCgpa).toFixed(2) : "N/A"}
+                {prevCgpaValue !== undefined && prevCgpaValue !== null
+                  ? Number(prevCgpaValue).toFixed(2)
+                  : "N/A"}
               </span>
               <span className="text-xs text-slate-400 block mt-0.5">Scale: 0 - 10</span>
             </div>
@@ -102,7 +110,7 @@ export default function StudentCard({ student }) {
                   className={`h-2 rounded-full ${
                     Number(student.attendance) >= 75 ? "bg-emerald-500" : "bg-rose-500"
                   }`}
-                  style={{ width: `${Math.min(100, Math.max(0, student.attendance))}%` }}
+                  style={{ width: `${Math.min(100, Math.max(0, Number(student.attendance)))}%` }}
                 />
               </div>
               <span className="text-[11px] text-slate-400 block mt-1">
@@ -121,7 +129,7 @@ export default function StudentCard({ student }) {
                 <div
                   className="bg-indigo-500 h-2 rounded-full"
                   style={{
-                    width: `${Math.min(100, Math.max(0, student.assignmentCompletion))}%`,
+                    width: `${Math.min(100, Math.max(0, Number(student.assignmentCompletion)))}%`,
                   }}
                 />
               </div>
