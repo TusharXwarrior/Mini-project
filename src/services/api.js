@@ -36,4 +36,36 @@ export const checkHealth = async () => {
   return response.data;
 };
 
+// Conversation & Chat APIs
+export const getConversation = async (studentId) => {
+  const response = await apiClient.get(`/conversations/${studentId}`);
+  return response.data;
+};
+
+export const sendConversationMessage = async (studentId, messageData) => {
+  const response = await apiClient.post(`/conversations/${studentId}/messages`, messageData);
+  return response.data;
+};
+
+export const getAiSuggestedResponses = async (studentId) => {
+  const response = await apiClient.post(`/conversations/${studentId}/ai-suggest`);
+  return response.data;
+};
+
+// Progress Tracking APIs
+export const getProgressHistory = async (studentId) => {
+  const response = await apiClient.get(`/progress/${studentId}`);
+  return response.data;
+};
+
+export const recordStudentProgress = async (studentId, progressData) => {
+  const response = await apiClient.post(`/progress/${studentId}`, progressData);
+  return response.data;
+};
+
+export const getProgressComparison = async (studentId) => {
+  const response = await apiClient.get(`/progress/${studentId}/comparison`);
+  return response.data;
+};
+
 export default apiClient;

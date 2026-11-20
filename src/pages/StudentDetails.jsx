@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getStudentById, deleteStudent } from "../services/api";
 import StudentCard from "../components/StudentCard";
+import StudentConversation from "../components/StudentConversation";
+import StudentProgressTracking from "../components/StudentProgressTracking";
 import {
   ArrowLeft,
   Cpu,
@@ -10,6 +12,9 @@ import {
   Loader2,
   LayoutDashboard,
   Calendar,
+  MessageSquare,
+  TrendingUp,
+  UserCheck,
 } from "lucide-react";
 
 export default function StudentDetails() {
@@ -20,16 +25,35 @@ export default function StudentDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState("progress"); // "progress", "conversation", "profile"
+
+  const fetchStudent = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await getStudentById(id);
+      if (response && response.success) {
+        setStudent(response.data);
+      } else {
+        setError(response.message || "Failed to load student details.");
+      }
+    } catch (err) {
+      console.error("Error fetching student details:", err);
+      setError(
+        err.response?.data?.message ||
+          "Unable to load student information from the server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchStudent = async () => {
-      setLoading(true);
-      setError("");
+    let ignore = false;
+    const loadData = async () => {
       try {
         const response = await getStudentById(id);
-        if (isMounted) {
+        if (!ignore) {
           if (response && response.success) {
             setStudent(response.data);
           } else {
@@ -37,29 +61,30 @@ export default function StudentDetails() {
           }
         }
       } catch (err) {
-        if (isMounted) {
-          console.error("Error fetching student details:", err);
+        if (!ignore) {
           setError(
             err.response?.data?.message ||
               "Unable to load student information from the server."
           );
         }
       } finally {
-        if (isMounted) {
+        if (!ignore) {
           setLoading(false);
         }
       }
     };
-
-    fetchStudent();
-
+    loadData();
     return () => {
-      isMounted = false;
+      ignore = true;
     };
   }, [id]);
 
   const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete student "${student?.name}" (${student?.studentId}) from MongoDB?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete student "${student?.name}" (${student?.studentId}) from MongoDB? All associated conversation and progress records will be permanently deleted.`
+      )
+    ) {
       return;
     }
 
@@ -71,7 +96,8 @@ export default function StudentDetails() {
     } catch (err) {
       console.error("Error deleting student:", err);
       alert(
-        err.response?.data?.message || "Failed to delete student record. Please try again."
+        err.response?.data?.message ||
+          "Failed to delete student record. Please try again."
       );
       setIsDeleting(false);
     }
@@ -110,7 +136,7 @@ export default function StudentDetails() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-8">
+    <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8">
       {/* Top Navigation & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -123,7 +149,7 @@ export default function StudentDetails() {
           </button>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-              Student Details
+              {student.name}
             </h1>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-mono font-medium">
               {student.studentId}
@@ -137,10 +163,9 @@ export default function StudentDetails() {
                   year: "numeric",
                   month: "short",
                   day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
                 })
-              : "Recent"}
+              : "Recent"}{" "}
+            • {student.branch} • {student.semester}
           </p>
         </div>
 
@@ -150,6 +175,7 @@ export default function StudentDetails() {
             disabled={isDeleting}
             type="button"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition"
+            title="Deletes student and purges associated conversations & progress records"
           >
             {isDeleting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -161,23 +187,81 @@ export default function StudentDetails() {
         </div>
       </div>
 
-      {/* Main Student Card */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Permanent Student Profile (MongoDB)
-        </h2>
-        <StudentCard student={student} />
-      </section>
+      {/* Tabs Navigation */}
+      <div className="flex border-b border-slate-200 space-x-1 sm:space-x-3 text-xs sm:text-sm font-semibold">
+        <button
+          type="button"
+          onClick={() => setActiveTab("progress")}
+          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 transition ${
+            activeTab === "progress"
+              ? "border-blue-600 text-blue-700"
+              : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          Progress & Auto Comparison
+        </button>
 
-      {/* AI Prediction Section (Requirement 6: Placeholder) */}
-      <section className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+        <button
+          type="button"
+          onClick={() => setActiveTab("conversation")}
+          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 transition ${
+            activeTab === "conversation"
+              ? "border-blue-600 text-blue-700"
+              : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
+          }`}
+        >
+          <MessageSquare className="w-4 h-4" />
+          Student ↔ Counsellor Chat
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("profile")}
+          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 transition ${
+            activeTab === "profile"
+              ? "border-blue-600 text-blue-700"
+              : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          Academic Profile Card
+        </button>
+      </div>
+
+      {/* Tab Contents */}
+      {activeTab === "progress" && (
+        <section className="space-y-6">
+          <StudentProgressTracking
+            student={student}
+            onProgressUpdated={fetchStudent}
+          />
+        </section>
+      )}
+
+      {activeTab === "conversation" && (
+        <section className="space-y-6">
+          <StudentConversation student={student} />
+        </section>
+      )}
+
+      {activeTab === "profile" && (
+        <section className="space-y-6">
+          <StudentCard student={student} />
+        </section>
+      )}
+
+      {/* AI Prediction Placeholder Notice */}
+      <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
               <Cpu className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">AI Prediction</h2>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                AI Prediction Status
+              </h2>
               <p className="text-xs text-slate-500">
                 Machine Learning risk classification & inference engine
               </p>
@@ -195,17 +279,14 @@ export default function StudentDetails() {
           </div>
         </div>
 
-        <div className="mt-6 text-center py-8 px-4 bg-slate-50 rounded-lg border border-dashed border-slate-200 space-y-3">
-          <div className="w-12 h-12 rounded-full bg-slate-200/70 text-slate-500 flex items-center justify-center mx-auto">
-            <Cpu className="w-6 h-6" />
-          </div>
-          <p className="text-base sm:text-lg font-medium text-slate-700 max-w-lg mx-auto">
+        <div className="mt-4 text-center py-6 px-4 bg-slate-50 rounded-lg border border-dashed border-slate-200 space-y-2">
+          <p className="text-sm font-medium text-slate-700 max-w-lg mx-auto">
             Prediction will appear here after connecting the Machine Learning model.
           </p>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Student academic, attendance, and administrative attributes are now safely
-            stored in the MongoDB database. In Part 3, this record will be passed to
-            the ML inference pipeline to predict dropout risk probability.
+            All student parameters, conversations, and progress checkpoints are permanently
+            stored in MongoDB. The classification algorithm will evaluate these attributes and
+            output dropout risk categories in the ML phase.
           </p>
         </div>
       </section>

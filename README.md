@@ -1,165 +1,107 @@
-# AI-Based Student Dropout Prediction System
+# AI-Based Student Dropout Prediction & Intervention System
 
 > **College Project Showcase Prototype**  
-> **Stage:** Part 2 — Fullstack Backend & Database Integration  
-> **Status:** Backend Connected & Live with MongoDB
+> **Status:** Live Fullstack Application with Student Conversation & Progress Tracking  
+> **Tech Stack:** React 19, Vite 8, Tailwind CSS 4, Node.js, Express.js, MongoDB, Mongoose, Axios
 
 ---
 
-## 📌 Project Overview
+## 📌 Project Features Overview
 
-This application serves as the data collection, institutional monitoring, and student retention analytics portal for an **AI-Based Student Dropout Prediction System**.
+This institutional portal provides academic risk monitoring, early intervention mechanisms, and longitudinal progress tracking:
 
-- **Part 1 (Frontend & Data Collection)**: Built the responsive React frontend, intake form with input boundary validations, and student profile preview.
-- **Part 2 (Backend & Database Integration)**: Built a REST API using Node.js, Express.js, and MongoDB with Mongoose to permanently store student records, manage student data, and display live database analytics.
-- **Part 3 (Upcoming)**: Machine Learning model training, inference pipeline, and AI dropout risk probability prediction.
+### 1. 💬 Student Conversation System
+- **Student ↔ Counsellor Chat**: Individual persistent chat history stored directly in MongoDB.
+- **Message Timestamps**: Accurate chronological audit trail for every student interaction.
+- **Dual Perspective Switch**: Seamlessly toggle between **Counsellor View** and **Student View** for presentation testing.
+- **🤖 AI Counselling Assistant**: Context-aware suggested responses tailored to the student's academic standing, attendance rate, and backlog status for quick one-click counselling messages.
 
----
+### 2. 📈 Student Progress Tracking
+- **Multi-Checkpoint Tracking**: Log semester reviews, mid-terms, and intervention checkpoints.
+- **Key Metrics Tracked**: Attendance %, CGPA, Assignment Completion %, and Active Backlogs.
+- **Holistic Wellbeing**: Wellbeing rating (*Good*, *Moderate*, *Needs Attention*, *Critical*).
+- **Counsellor Remarks & Action Plans**: Qualitative notes and concrete goals agreed upon with the student.
+- **Scheduled Follow-Up Dates**: Actionable calendar reminders for subsequent evaluations.
 
-## 🚀 Tech Stack
+### 3. ⚖️ Automatic Progress Comparison
+The system automatically evaluates progress between baseline/previous assessments and the current status:
 
-### Frontend
-- **React.js 19**: Component architecture & hooks
-- **Vite 8**: Frontend build tool & HMR dev server
-- **Tailwind CSS 4**: Modern styling
-- **React Router DOM 7**: Client routing
-- **Axios**: HTTP client for REST API communication
-- **Lucide React**: Educational iconography
+| Parameter | Previous | Current | Calculated Status |
+| :--- | :--- | :--- | :---: |
+| **Attendance** | 62% | 78% | 🟢 **Improving** |
+| **CGPA** | 5.80 | 6.40 | 🟢 **Improving** |
+| **Assignments** | 55% | 82% | 🟢 **Improving** |
+| **Backlogs** | 3 | 2 | 🟢 **Improving** |
 
-### Backend
-- **Node.js**: Runtime environment
-- **Express.js**: RESTful web API framework
-- **MongoDB**: NoSQL document database
-- **Mongoose**: ODM library with strict schema validation
-- **dotenv**: Environment variable management
-- **CORS**: Cross-origin resource sharing configuration
+*Dynamic Status Badges:*
+- 🟢 **Improving**: Academic gains, attendance recovery, backlog reduction.
+- 🟡 **Stable**: Minor variations within normal performance thresholds.
+- 🔴 **Declining**: Dropping scores, reduced attendance, increased backlogs.
 
----
-
-## 📁 Project Structure
-
-```
-Mini project 02/
-├── backend/
-│   ├── models/
-│   │   └── Student.js          # Mongoose schema with validations
-│   ├── controllers/
-│   │   └── studentController.js # CRUD handlers & duplicate key checks
-│   ├── routes/
-│   │   └── studentRoutes.js    # Express route mappings
-│   ├── server.js               # Express application entry & MongoDB connection
-│   ├── .env                    # Environment variables (PORT, MONGODB_URI)
-│   ├── .env.example            # Environment template
-│   └── package.json            # Backend dependencies
-├── src/
-│   ├── components/
-│   │   ├── Navbar.jsx          # Header with branding & route navigation
-│   │   └── StudentCard.jsx     # Reusable student profile card
-│   ├── pages/
-│   │   ├── Home.jsx            # Landing page with system pillars
-│   │   ├── Dashboard.jsx       # Real-time dashboard connected to MongoDB
-│   │   ├── StudentForm.jsx     # Intake form posting to Express via Axios
-│   │   ├── StudentDetails.jsx  # Student details (/students/:id) from MongoDB
-│   │   └── Result.jsx          # Submission confirmation & status
-│   ├── services/
-│   │   └── api.js              # Centralized Axios API client
-│   ├── data/
-│   │   └── students.js         # Demo dataset & local fallback utilities
-│   ├── App.jsx                 # Route definitions including /students/:id
-│   ├── main.jsx                # Application root mounting
-│   └── index.css               # Tailwind CSS imports
-├── package.json                # Frontend dependencies
-└── vite.config.js              # Vite configuration with Tailwind plugin
-```
+### 4. 🗄️ Database Architecture & Cascade Deletions
+- **Mongoose Schemas**: `Student`, `Message` (`Conversation.js`), and `Progress`.
+- **Automatic Cascade Deletion**: Deleting a student via `DELETE /api/students/:id` automatically removes all associated conversation logs and progress checkpoints.
 
 ---
 
-## 📡 REST API Endpoints
+## 📡 REST API Documentation
 
 Base URL: `http://localhost:5000/api`
 
-| Method | Endpoint | Description | Response Codes |
-| --- | --- | --- | --- |
-| `GET` | `/health` | Health check & MongoDB connection status | 200 |
-| `GET` | `/students` | Get all students from database (sorted by createdAt) | 200, 500 |
-| `POST` | `/students` | Create & validate a new student record | 201, 400, 409, 500 |
-| `GET` | `/students/:id` | Get single student by MongoDB `_id` or `studentId` | 200, 404, 500 |
-| `DELETE` | `/students/:id` | Delete student by MongoDB `_id` or `studentId` | 200, 404, 500 |
+### Students API
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/students` | Get all students (sorted by createdAt) |
+| `POST` | `/api/students` | Register a new student profile |
+| `GET` | `/api/students/:id` | Get student details by ID or Student ID |
+| `DELETE` | `/api/students/:id` | Delete student and cascade purge chat & progress |
 
-### Sample POST Request Body
-```json
-{
-  "studentId": "STU-2024-001",
-  "name": "Aarav Sharma",
-  "age": 20,
-  "gender": "Male",
-  "branch": "Computer Science",
-  "semester": "4th Semester",
-  "cgpa": 8.85,
-  "previousCgpa": 8.70,
-  "backlogs": 0,
-  "internalMarks": 44,
-  "attendance": 92,
-  "assignmentCompletion": 95,
-  "classesMissed": 6,
-  "scholarship": "Yes",
-  "feeStatus": "Paid"
-}
-```
+### Conversations API
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/conversations/:studentId` | Get complete chat history for student |
+| `POST` | `/api/conversations/:studentId/messages` | Send message as Student or Counsellor |
+| `POST` | `/api/conversations/:studentId/ai-suggest` | Generate AI Counselling suggested responses |
+
+### Progress Tracking API
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/progress/:studentId` | Get all progress review checkpoints |
+| `POST` | `/api/progress/:studentId` | Record a new evaluation checkpoint |
+| `GET` | `/api/progress/:studentId/comparison` | Compute automatic progress comparison |
 
 ---
 
-## 💻 How to Run the Project
+## 💻 Local Setup & Execution Instructions
 
-### 1. MongoDB Setup
-Ensure MongoDB Server is running locally on port `27017`:
-- On Windows: Run `Get-Service MongoDB` in PowerShell (or start via Services).
-- Connection string in `backend/.env`: `mongodb://127.0.0.1:27017/student_dropout_db`
+### Prerequisites
+- Node.js (v18+)
+- MongoDB Community Server running on `mongodb://127.0.0.1:27017`
 
-### 2. Start the Backend Server
+### 1. Start the Backend API Server
 ```bash
-# In project root:
+# From project root:
 npm --prefix backend start
 
-# Or navigate directly:
+# Or inside backend directory:
 cd backend
 npm install
 npm start
 ```
-Backend will start on: `http://localhost:5000`
+The Express backend starts at: **`http://localhost:5000`**
 
-### 3. Start the Frontend Application
-In a separate terminal:
+### 2. Start the React Frontend Application
 ```bash
+# In the project root directory:
 npm install
 npm run dev
 ```
-Frontend will be live at: `http://localhost:5173`
+The application opens at: **`http://localhost:5173`**
 
 ---
 
-## 🧭 Tested End-to-End User Flow
+## 🚀 Cloud Deployment (Render.com)
 
-1. Open `http://localhost:5173/` (Home page).
-2. Click **"Check Student Risk"** → navigates to `/student-form`.
-3. Submit student details or click **"Fill Demo"**:
-   - Form posts data to `POST http://localhost:5000/api/students` via Axios.
-   - Shows success notification: *"Student data saved successfully."*
-4. Automatically navigates to `/result` showing the submitted profile and the placeholder:
-   - `ML Model: Not Connected` / `AI Prediction: Coming Soon`.
-5. Open `/dashboard`:
-   - Live **Total Students** count loaded directly from MongoDB.
-   - Student records listed with real data: `Student ID | Student Name | Branch | Semester | CGPA | Attendance | Backlogs`.
-6. Click any student row or action icon → Opens `/students/:id`:
-   - Fetches the persistent record from MongoDB.
-   - Retains the clear `AI Prediction: Coming Soon` notice.
-7. Click **"Delete Student"** → Calls `DELETE /api/students/:id`, removes the document from MongoDB, and returns to Dashboard.
-
----
-
-## 🔮 What Will Be Implemented in Part 3
-
-- **Machine Learning Model Integration**: Training a supervised classification model (e.g., Random Forest or Logistic Regression) using student training data.
-- **Prediction API Endpoint**: Creating `POST /api/predict` or attaching prediction inference directly to student records.
-- **Risk Calculation**: Generating risk scores (Low, Medium, High Risk) and percentage probability of dropout.
-- **Intervention Recommendations**: Visual indicators and early warning recommendations for academic advisors.
+A complete [render.yaml](file:///c:/Mini%20project%2002/render.yaml) blueprint is included:
+- **Backend**: Express Web Service deployed with Node environment.
+- **Frontend**: Vite Static Site deployed with rewrite rules for client-side routing.

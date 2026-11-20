@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const Student = require("../models/Student");
+const Message = require("../models/Conversation");
+const Progress = require("../models/Progress");
 
 // @desc    Add a new student
 // @route   POST /api/students
@@ -192,9 +194,16 @@ exports.deleteStudent = async (req, res) => {
       });
     }
 
+    // Automatic deletion of associated records (Conversation messages and Progress tracking)
+    const targetStudentId = student.studentId;
+    await Promise.all([
+      Message.deleteMany({ studentId: targetStudentId }),
+      Progress.deleteMany({ studentId: targetStudentId }),
+    ]);
+
     return res.status(200).json({
       success: true,
-      message: "Student record deleted successfully.",
+      message: "Student record and associated conversation & progress records deleted successfully.",
       data: { id: student._id, studentId: student.studentId },
     });
   } catch (error) {
