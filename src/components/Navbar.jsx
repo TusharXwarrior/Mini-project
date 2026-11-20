@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { GraduationCap, LayoutDashboard, UserPlus, Home as HomeIcon, Menu, X } from "lucide-react";
+import { GraduationCap, LayoutDashboard, UserPlus, Home as HomeIcon, Menu, X, Activity } from "lucide-react";
 
 export default function Navbar() {
   const location = useLocation();
@@ -12,6 +12,7 @@ export default function Navbar() {
     { path: "/", label: "Home", icon: HomeIcon },
     { path: "/student-form", label: "Student Form", icon: UserPlus },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/risk-analysis", label: "Risk Analysis", icon: Activity },
   ];
 
   return (
@@ -29,7 +30,7 @@ export default function Navbar() {
                   EduRisk AI
                 </span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
-                  Part 2: MongoDB
+                  Part 3: ML
                 </span>
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">
