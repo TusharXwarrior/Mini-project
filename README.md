@@ -1,165 +1,61 @@
-# AI-Based Student Dropout Prediction System
+# EduRisk AI — Student Retention & Early Intervention System
 
-> **College Project Showcase Prototype**  
-> **Stage:** Part 2 — Fullstack Backend & Database Integration  
-> **Status:** Backend Connected & Live with MongoDB
+EduRisk AI is a MERN application for managing student profiles, student–counsellor conversations and longitudinal academic progress checkpoints.
 
----
+## Features
+- Student profile CRUD and academic/attendance overview.
+- Persistent conversation history with student and counsellor message views.
+- Progress checkpoints: attendance, CGPA, assignment completion, backlogs and wellbeing.
+- Latest-vs-previous checkpoint comparison: improving, stable or declining.
+- Counsellor notes, action plans and follow-up dates.
+- Optional AI-generated counselling drafts for human review; a guided template works without an AI key.
+- Health endpoint and Render deployment blueprint.
 
-## 📌 Project Overview
+## Stack
+React, Vite, React Router, Tailwind, Axios, Node.js, Express, Mongoose and MongoDB.
 
-This application serves as the data collection, institutional monitoring, and student retention analytics portal for an **AI-Based Student Dropout Prediction System**.
+## Local setup
+Requirements: Node.js 18+ and MongoDB local or Atlas.
 
-- **Part 1 (Frontend & Data Collection)**: Built the responsive React frontend, intake form with input boundary validations, and student profile preview.
-- **Part 2 (Backend & Database Integration)**: Built a REST API using Node.js, Express.js, and MongoDB with Mongoose to permanently store student records, manage student data, and display live database analytics.
-- **Part 3 (Upcoming)**: Machine Learning model training, inference pipeline, and AI dropout risk probability prediction.
-
----
-
-## 🚀 Tech Stack
-
-### Frontend
-- **React.js 19**: Component architecture & hooks
-- **Vite 8**: Frontend build tool & HMR dev server
-- **Tailwind CSS 4**: Modern styling
-- **React Router DOM 7**: Client routing
-- **Axios**: HTTP client for REST API communication
-- **Lucide React**: Educational iconography
-
-### Backend
-- **Node.js**: Runtime environment
-- **Express.js**: RESTful web API framework
-- **MongoDB**: NoSQL document database
-- **Mongoose**: ODM library with strict schema validation
-- **dotenv**: Environment variable management
-- **CORS**: Cross-origin resource sharing configuration
-
----
-
-## 📁 Project Structure
-
-```
-Mini project 02/
-├── backend/
-│   ├── models/
-│   │   └── Student.js          # Mongoose schema with validations
-│   ├── controllers/
-│   │   └── studentController.js # CRUD handlers & duplicate key checks
-│   ├── routes/
-│   │   └── studentRoutes.js    # Express route mappings
-│   ├── server.js               # Express application entry & MongoDB connection
-│   ├── .env                    # Environment variables (PORT, MONGODB_URI)
-│   ├── .env.example            # Environment template
-│   └── package.json            # Backend dependencies
-├── src/
-│   ├── components/
-│   │   ├── Navbar.jsx          # Header with branding & route navigation
-│   │   └── StudentCard.jsx     # Reusable student profile card
-│   ├── pages/
-│   │   ├── Home.jsx            # Landing page with system pillars
-│   │   ├── Dashboard.jsx       # Real-time dashboard connected to MongoDB
-│   │   ├── StudentForm.jsx     # Intake form posting to Express via Axios
-│   │   ├── StudentDetails.jsx  # Student details (/students/:id) from MongoDB
-│   │   └── Result.jsx          # Submission confirmation & status
-│   ├── services/
-│   │   └── api.js              # Centralized Axios API client
-│   ├── data/
-│   │   └── students.js         # Demo dataset & local fallback utilities
-│   ├── App.jsx                 # Route definitions including /students/:id
-│   ├── main.jsx                # Application root mounting
-│   └── index.css               # Tailwind CSS imports
-├── package.json                # Frontend dependencies
-└── vite.config.js              # Vite configuration with Tailwind plugin
-```
-
----
-
-## 📡 REST API Endpoints
-
-Base URL: `http://localhost:5000/api`
-
-| Method | Endpoint | Description | Response Codes |
-| --- | --- | --- | --- |
-| `GET` | `/health` | Health check & MongoDB connection status | 200 |
-| `GET` | `/students` | Get all students from database (sorted by createdAt) | 200, 500 |
-| `POST` | `/students` | Create & validate a new student record | 201, 400, 409, 500 |
-| `GET` | `/students/:id` | Get single student by MongoDB `_id` or `studentId` | 200, 404, 500 |
-| `DELETE` | `/students/:id` | Delete student by MongoDB `_id` or `studentId` | 200, 404, 500 |
-
-### Sample POST Request Body
-```json
-{
-  "studentId": "STU-2024-001",
-  "name": "Aarav Sharma",
-  "age": 20,
-  "gender": "Male",
-  "branch": "Computer Science",
-  "semester": "4th Semester",
-  "cgpa": 8.85,
-  "previousCgpa": 8.70,
-  "backlogs": 0,
-  "internalMarks": 44,
-  "attendance": 92,
-  "assignmentCompletion": 95,
-  "classesMissed": 6,
-  "scholarship": "Yes",
-  "feeStatus": "Paid"
-}
-```
-
----
-
-## 💻 How to Run the Project
-
-### 1. MongoDB Setup
-Ensure MongoDB Server is running locally on port `27017`:
-- On Windows: Run `Get-Service MongoDB` in PowerShell (or start via Services).
-- Connection string in `backend/.env`: `mongodb://127.0.0.1:27017/student_dropout_db`
-
-### 2. Start the Backend Server
+Backend:
 ```bash
-# In project root:
-npm --prefix backend start
-
-# Or navigate directly:
 cd backend
 npm install
-npm start
-```
-Backend will start on: `http://localhost:5000`
-
-### 3. Start the Frontend Application
-In a separate terminal:
-```bash
-npm install
+cp .env.example .env
+# Set MONGODB_URI in backend/.env
 npm run dev
 ```
-Frontend will be live at: `http://localhost:5173`
 
----
+Frontend (repository root, new terminal):
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
+Open http://localhost:5173 and select **Conversations & Progress**. Frontend defaults to http://localhost:5000/api.
 
-## 🧭 Tested End-to-End User Flow
+## API
+- `GET /api/health`
+- Existing CRUD: `/api/students`
+- `GET /api/conversations` — overview for all students
+- `GET /api/conversations/:studentId` — get/create a conversation
+- `POST /api/conversations/:studentId/messages` — `{ "message": "...", "sender": "student|counsellor", "senderName": "..." }`
+- `PATCH /api/conversations/:studentId/close`
+- `GET /api/progress/:studentId`
+- `POST /api/progress/:studentId` — required: attendance, cgpa, assignmentCompletion; optional: backlogs, wellbeing, notes, actionPlan, followUpAt, recordedBy.
+- `POST /api/ai/counselling-suggestion/:studentId` — generates a draft suggestion.
 
-1. Open `http://localhost:5173/` (Home page).
-2. Click **"Check Student Risk"** → navigates to `/student-form`.
-3. Submit student details or click **"Fill Demo"**:
-   - Form posts data to `POST http://localhost:5000/api/students` via Axios.
-   - Shows success notification: *"Student data saved successfully."*
-4. Automatically navigates to `/result` showing the submitted profile and the placeholder:
-   - `ML Model: Not Connected` / `AI Prediction: Coming Soon`.
-5. Open `/dashboard`:
-   - Live **Total Students** count loaded directly from MongoDB.
-   - Student records listed with real data: `Student ID | Student Name | Branch | Semester | CGPA | Attendance | Backlogs`.
-6. Click any student row or action icon → Opens `/students/:id`:
-   - Fetches the persistent record from MongoDB.
-   - Retains the clear `AI Prediction: Coming Soon` notice.
-7. Click **"Delete Student"** → Calls `DELETE /api/students/:id`, removes the document from MongoDB, and returns to Dashboard.
+## Optional AI assistant
+Configure backend-only `AI_API_KEY`, optionally `AI_BASE_URL` and `AI_MODEL`. Without a key, the endpoint returns a rule-based guided check-in draft. AI text is a counsellor draft, not automatically delivered to students.
 
----
+## Render deployment
+1. Push this branch to GitHub and create a Render Blueprint using `render.yaml`.
+2. Create MongoDB Atlas and set the backend `MONGODB_URI` environment variable.
+3. Set backend `CLIENT_ORIGIN` to the exact deployed frontend origin.
+4. Once Render creates the backend, replace `REPLACE-WITH-BACKEND.onrender.com` in the frontend service's `VITE_API_BASE_URL` with the real backend hostname plus `/api`, then redeploy the frontend.
+5. Optionally set `AI_API_KEY` on the backend only. Never expose provider secrets in `VITE_*` variables.
 
-## 🔮 What Will Be Implemented in Part 3
+## Production security — read before using real student data
+This repository did not previously include an authentication system. The student/counsellor selector is a demo view switch, **not access control**. Do not deploy with identifiable student records until server-side authentication, role-based authorization, student-to-account ownership checks, HTTPS, rate limiting, audit logging, data-retention controls and privacy/consent notices are implemented. Restrict database network access and use a least-privilege MongoDB user.
 
-- **Machine Learning Model Integration**: Training a supervised classification model (e.g., Random Forest or Logistic Regression) using student training data.
-- **Prediction API Endpoint**: Creating `POST /api/predict` or attaching prediction inference directly to student records.
-- **Risk Calculation**: Generating risk scores (Low, Medium, High Risk) and percentage probability of dropout.
-- **Intervention Recommendations**: Visual indicators and early warning recommendations for academic advisors.
+Progress labels are transparent comparisons of entered checkpoints, not a validated dropout prediction. Human review is required; do not use them alone for disciplinary, clinical or high-impact decisions.

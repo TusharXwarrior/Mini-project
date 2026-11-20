@@ -2,82 +2,46 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
-
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/student_dropout_db";
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/student_dropout_db";
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map((v) => v.trim());
 
-// Middleware
-app.use(
-  cors({
-    origin: [CLIENT_ORIGIN, "http://localhost:5173", "http://127.0.0.1:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== "production" && ["http://localhost:5173", "http://127.0.0.1:5173"].includes(origin))) return callback(null, true);
+    return callback(new Error("Origin is not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
+app.use(express.json({ limit: "1mb" }));
+app.use((req, res, next) => { console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`); next(); });
 
-app.use(express.json());
+app.get("/api/health", (_req, res) => res.status(200).json({
+  status: "ok",
+  service: "EduRisk AI API",
+  database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+}));
 
-// Request logging (clean format for showcase)
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
+app.use("/api/students", require("./routes/studentRoutes"));
+app.use("/api/conversations", require("./routes/conversationRoutes"));
+app.use("/api/progress", require("./routes/progressRoutes"));
+app.use("/api/ai", require("./routes/aiRoutes"));
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    service: "Student Dropout Prediction Backend (Part 2)",
-    database:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-  });
-});
-
-// Routes
-const studentRoutes = require("./routes/studentRoutes");
-app.use("/api/students", studentRoutes);
-
-// 404 handler for unknown routes
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `API route ${req.originalUrl} not found.`,
-  });
-});
-
-// Centralized error handler
-app.use((err, req, res, _next) => {
+app.use((req, res) => res.status(404).json({ success: false, message: `API route ${req.originalUrl} not found.` }));
+app.use((err, _req, res, _next) => {
   console.error("Unhandled error:", err);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
+  res.status(err.status || 500).json({ success: false, message: err.message || "Internal Server Error" });
 });
 
-// Connect to MongoDB and start server
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => {
-    console.log("==================================================");
-    console.log(" Connected successfully to MongoDB database");
-    console.log(` Database URI: ${MONGODB_URI}`);
-    console.log("==================================================");
-
-    app.listen(PORT, () => {
-      console.log(` Server running on http://localhost:${PORT}`);
-      console.log(` API Endpoint: http://localhost:${PORT}/api/students`);
-      console.log("==================================================");
-    });
-  })
-  .catch((err) => {
-    console.error(" MongoDB connection error:", err.message);
-    console.error("Please ensure the MongoDB service is running locally on port 27017.");
-    process.exit(1);
-  });
+mongoose.connect(MONGODB_URI).then(() => {
+  console.log("Connected successfully to MongoDB");
+  app.listen(PORT, () => console.log(`EduRisk API running on port ${PORT}`));
+}).catch((err) => {
+  console.error("MongoDB connection error:", err.message);
+  process.exit(1);
+});
