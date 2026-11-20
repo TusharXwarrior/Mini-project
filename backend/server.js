@@ -34,7 +34,7 @@ app.use((req, res, next) => {
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "ok",
-    service: "Student Dropout Prediction Backend (Part 2)",
+    service: "EduRisk AI API",
     database:
       mongoose.connection.readyState === 1 ? "connected" : "disconnected",
   });
