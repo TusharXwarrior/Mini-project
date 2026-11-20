@@ -106,6 +106,36 @@ const studentSchema = new mongoose.Schema(
       default: "Paid",
     },
 
+    // AI Prediction & Risk Evaluation
+    prediction: {
+      riskLevel: {
+        type: String,
+        enum: ["Low Risk", "Medium Risk", "High Risk"],
+        default: "Low Risk",
+      },
+      riskScore: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 15,
+      },
+      probability: {
+        type: Number,
+        default: 0.15,
+      },
+      factors: [
+        {
+          type: String,
+        },
+      ],
+      recommendation: {
+        type: String,
+      },
+      evaluatedAt: {
+        type: Date,
+      },
+    },
+
     // Metadata
     createdAt: {
       type: Date,

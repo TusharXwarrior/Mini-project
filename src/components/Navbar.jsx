@@ -28,12 +28,13 @@ export default function Navbar() {
                 <span className="font-bold text-lg text-slate-900 tracking-tight">
                   EduRisk AI
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
-                  Part 2: MongoDB
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  AI Prediction Active
                 </span>
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">
-                Student Dropout Prediction System
+                AI-Based Student Dropout Prediction & Intervention System
               </p>
             </div>
           </Link>

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Student = require("../models/Student");
 const Message = require("../models/Conversation");
 const Progress = require("../models/Progress");
+const { calculateStudentRisk } = require("../services/predictionService");
 
 // @desc    Add a new student
 // @route   POST /api/students
@@ -79,6 +80,9 @@ exports.createStudent = async (req, res) => {
       feeStatus: feeStatus || "Paid",
     });
 
+    // Compute AI Dropout Risk Evaluation
+    student.prediction = calculateStudentRisk(student);
+
     const savedStudent = await student.save();
 
     return res.status(201).json({
@@ -117,7 +121,15 @@ exports.createStudent = async (req, res) => {
 // @route   GET /api/students
 exports.getAllStudents = async (req, res) => {
   try {
-    const students = await Student.find().sort({ createdAt: -1 });
+    const rawStudents = await Student.find().sort({ createdAt: -1 });
+
+    const students = rawStudents.map((s) => {
+      const doc = s.toObject();
+      if (!doc.prediction || !doc.prediction.riskLevel) {
+        doc.prediction = calculateStudentRisk(doc);
+      }
+      return doc;
+    });
 
     return res.status(200).json({
       success: true,
@@ -157,15 +169,78 @@ exports.getStudentById = async (req, res) => {
       });
     }
 
+    const doc = student.toObject();
+    if (!doc.prediction || !doc.prediction.riskLevel) {
+      doc.prediction = calculateStudentRisk(doc);
+    }
+
     return res.status(200).json({
       success: true,
-      data: student,
+      data: doc,
     });
   } catch (error) {
     console.error("Error fetching student by ID:", error);
     return res.status(500).json({
       success: false,
       message: "Server error: Unable to fetch student details.",
+    });
+  }
+};
+
+// @desc    Run AI Risk Prediction for a specific student
+// @route   POST /api/students/:id/predict
+exports.predictStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let student = null;
+
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      student = await Student.findById(id);
+    }
+    if (!student) {
+      student = await Student.findOne({ studentId: id.toString().trim().toUpperCase() });
+    }
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: `Student with identifier "${id}" not found.`,
+      });
+    }
+
+    const riskResult = calculateStudentRisk(student);
+    student.prediction = riskResult;
+    await student.save();
+
+    return res.status(200).json({
+      success: true,
+      data: riskResult,
+    });
+  } catch (error) {
+    console.error("Error computing student prediction:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error: Unable to evaluate prediction.",
+    });
+  }
+};
+
+// @desc    Direct AI Risk Prediction for raw features
+// @route   POST /api/predict
+exports.predictDirect = async (req, res) => {
+  try {
+    const riskResult = calculateStudentRisk(req.body);
+    return res.status(200).json({
+      success: true,
+      prediction: riskResult.riskLevel,
+      probability: riskResult.probability,
+      data: riskResult,
+    });
+  } catch (error) {
+    console.error("Error computing direct prediction:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error: Unable to evaluate prediction.",
     });
   }
 };

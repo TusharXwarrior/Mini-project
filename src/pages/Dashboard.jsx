@@ -4,7 +4,6 @@ import { getStudents, deleteStudent, createStudent } from "../services/api";
 import { initialStudents } from "../data/students";
 import {
   Users,
-  UserCheck,
   Sparkles,
   Search,
   UserPlus,
@@ -14,6 +13,8 @@ import {
   ExternalLink,
   Trash2,
   RefreshCw,
+  Brain,
+  ShieldAlert,
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [branchFilter, setBranchFilter] = useState("All");
+  const [riskFilter, setRiskFilter] = useState("All");
   const [isSeeding, setIsSeeding] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
 
@@ -87,7 +89,7 @@ export default function Dashboard() {
     const identifier = student._id || student.studentId;
     if (
       !window.confirm(
-        `Are you sure you want to delete student "${student.name}" (${student.studentId})?`
+        `Are you sure you want to delete student "${student.name}" (${student.studentId})? All conversation and progress records will be removed.`
       )
     ) {
       return;
@@ -109,7 +111,7 @@ export default function Dashboard() {
     }
   };
 
-  // Seed demo students into MongoDB for demonstration showcase
+  // Seed demo students into MongoDB
   const handleSeedDemoData = async () => {
     setIsSeeding(true);
     setActionMessage("");
@@ -134,7 +136,7 @@ export default function Dashboard() {
             feeStatus: item.feeStatus,
           });
         } catch {
-          // ignore duplicate if already present
+          // ignore duplicate
         }
       }
       setActionMessage("Demo students successfully seeded into MongoDB!");
@@ -153,6 +155,12 @@ export default function Dashboard() {
     return ["All", ...Array.from(unique)];
   }, [students]);
 
+  const highRiskCount = useMemo(() => {
+    return students.filter(
+      (s) => s.prediction?.riskLevel === "High Risk"
+    ).length;
+  }, [students]);
+
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
       const studentId = (student.studentId || student.id || "").toLowerCase();
@@ -162,10 +170,40 @@ export default function Dashboard() {
       const matchesSearch = studentName.includes(term) || studentId.includes(term);
       const matchesBranch =
         branchFilter === "All" || student.branch === branchFilter;
+      const matchesRisk =
+        riskFilter === "All" || student.prediction?.riskLevel === riskFilter;
 
-      return matchesSearch && matchesBranch;
+      return matchesSearch && matchesBranch && matchesRisk;
     });
-  }, [students, searchTerm, branchFilter]);
+  }, [students, searchTerm, branchFilter, riskFilter]);
+
+  const renderRiskBadge = (pred) => {
+    const level = pred?.riskLevel || "Low Risk";
+    const score = pred?.riskScore ?? 15;
+
+    if (level === "High Risk") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+          High Risk ({score}%)
+        </span>
+      );
+    }
+    if (level === "Medium Risk") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          Medium Risk ({score}%)
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        Low Risk ({score}%)
+      </span>
+    );
+  };
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
@@ -173,14 +211,14 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 mb-2">
-            <Database className="w-3.5 h-3.5 text-blue-600" />
-            MongoDB Live Database Integration (Part 2)
+            <Brain className="w-3.5 h-3.5 text-blue-600" />
+            AI Dropout Prediction & Institutional Analytics
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
             Student Monitoring Dashboard
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Real-time student academic records and attendance directly from MongoDB.
+            Real-time dropout risk scoring, attendance monitoring, and intervention tracking.
           </p>
         </div>
 
@@ -213,7 +251,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 3 Metric Cards (Real MongoDB values) */}
+      {/* 3 Active Metric Cards (Real values & Active Prediction Engine) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {/* Card 1: Total Students */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs relative overflow-hidden">
@@ -232,48 +270,54 @@ export default function Dashboard() {
             <span className="text-xs text-slate-400 font-medium">in MongoDB</span>
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            Live count of persisted student records stored in database.
+            Total active students enrolled across monitored academic branches.
           </p>
         </div>
 
-        {/* Card 2: Students Registered */}
+        {/* Card 2: High Risk Alerts */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Students Registered
+              High Risk Alerts
             </span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <UserCheck className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+              <ShieldAlert className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900">
-              {loading ? "..." : students.length}
+            <span className="text-3xl font-extrabold text-rose-600">
+              {loading ? "..." : highRiskCount}
             </span>
-            <span className="text-xs text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded">
-              Verified
+            <span className="text-xs text-rose-700 font-medium bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+              Needs Immediate Support
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            Validated profiles with academic & attendance tracking.
+            Students flagged by the ML model with risk probability &ge; 65%.
           </p>
         </div>
 
-        {/* Card 3: Prediction Status */}
+        {/* Card 3: Prediction Status (ACTIVE) */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Prediction Status
+              Prediction Engine
             </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Brain className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-amber-700">Coming Soon</span>
+            <span className="text-2xl font-bold text-emerald-700 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              Active
+            </span>
+            <span className="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              ML Inference Online
+            </span>
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            Machine Learning model will be connected in Part 3.
+            Automated multi-factor evaluation scoring dropout risk probability.
           </p>
         </div>
       </div>
@@ -300,7 +344,7 @@ export default function Dashboard() {
 
       {/* Student Records Table Section */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        {/* Table Controls */}
+        {/* Table Controls with Risk Filter */}
         <div className="p-4 sm:p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -314,8 +358,8 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Search, Filter, & Demo Seeder */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {/* Search, Branch Filter & Risk Level Filter */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
@@ -323,14 +367,27 @@ export default function Dashboard() {
                 placeholder="Search by name or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full sm:w-60 pl-9 pr-3.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full sm:w-52 pl-9 pr-3.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
               />
             </div>
 
+            {/* Risk Filter */}
+            <select
+              value={riskFilter}
+              onChange={(e) => setRiskFilter(e.target.value)}
+              className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-slate-700 font-medium"
+            >
+              <option value="All">All Risk Levels</option>
+              <option value="High Risk">🔴 High Risk</option>
+              <option value="Medium Risk">🟡 Medium Risk</option>
+              <option value="Low Risk">🟢 Low Risk</option>
+            </select>
+
+            {/* Branch Filter */}
             <select
               value={branchFilter}
               onChange={(e) => setBranchFilter(e.target.value)}
-              className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-slate-700"
+              className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-slate-700 font-medium"
             >
               {branches.map((b) => (
                 <option key={b} value={b}>
@@ -375,6 +432,7 @@ export default function Dashboard() {
                   <th scope="col" className="py-3 px-4">CGPA</th>
                   <th scope="col" className="py-3 px-4">Attendance</th>
                   <th scope="col" className="py-3 px-4">Backlogs</th>
+                  <th scope="col" className="py-3 px-4">AI Risk Assessment</th>
                   <th scope="col" className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -465,6 +523,11 @@ export default function Dashboard() {
                         </span>
                       </td>
 
+                      {/* AI Risk Assessment */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        {renderRiskBadge(student.prediction)}
+                      </td>
+
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
@@ -474,7 +537,7 @@ export default function Dashboard() {
                               navigate(`/students/${student._id || studentIdentifier}`);
                             }}
                             className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
-                            title="View student profile"
+                            title="View student profile & AI prediction"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </button>
@@ -497,13 +560,23 @@ export default function Dashboard() {
           <div className="py-16 px-4 text-center space-y-3">
             <Database className="w-10 h-10 text-slate-300 mx-auto" />
             <h3 className="text-base font-semibold text-slate-700">
-              No Student Records in MongoDB Yet
+              No Matching Student Records
             </h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Submit a new student profile through the intake form or load the initial demo dataset
-              to populate the database.
+              No students match your selected search or risk filter criteria.
             </p>
             <div className="pt-2 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setBranchFilter("All");
+                  setRiskFilter("All");
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition"
+              >
+                Reset Filters
+              </button>
               <Link
                 to="/student-form"
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition"
@@ -511,34 +584,25 @@ export default function Dashboard() {
                 <UserPlus className="w-3.5 h-3.5" />
                 Add Student
               </Link>
-              <button
-                type="button"
-                onClick={handleSeedDemoData}
-                disabled={isSeeding}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition"
-              >
-                {isSeeding ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                )}
-                Seed Demo Dataset
-              </button>
             </div>
           </div>
         )}
 
         {/* Table Footer */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-          <span>Backend API: Express / MongoDB Server (Port 5000)</span>
+          <span>AI Prediction Model: Active Inference Engine (MongoDB Backend)</span>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Attendance &ge; 75%
+              Low Risk (&lt;38%)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              Medium Risk (38–64%)
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500" />
-              Attendance &lt; 75%
+              High Risk (&ge;65%)
             </span>
           </div>
         </div>

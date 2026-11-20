@@ -68,4 +68,15 @@ export const getProgressComparison = async (studentId) => {
   return response.data;
 };
 
+// AI Dropout Prediction APIs
+export const predictStudent = async (studentId) => {
+  const response = await apiClient.post(`/students/${studentId}/predict`);
+  return response.data;
+};
+
+export const predictDirect = async (studentData) => {
+  const response = await apiClient.post("/students/predict", studentData);
+  return response.data;
+};
+
 export default apiClient;

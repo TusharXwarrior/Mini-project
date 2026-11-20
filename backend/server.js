@@ -44,10 +44,15 @@ app.get("/api/health", (req, res) => {
 const studentRoutes = require("./routes/studentRoutes");
 const conversationRoutes = require("./routes/conversationRoutes");
 const progressRoutes = require("./routes/progressRoutes");
+const studentController = require("./controllers/studentController");
 
 app.use("/api/students", studentRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/progress", progressRoutes);
+
+// Direct prediction API endpoints (Part 3)
+app.post("/api/predict", studentController.predictDirect);
+app.post("/predict", studentController.predictDirect);
 
 // 404 handler for unknown routes
 app.use((req, res) => {

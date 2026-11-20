@@ -4,9 +4,9 @@ import { getStudentById, deleteStudent } from "../services/api";
 import StudentCard from "../components/StudentCard";
 import StudentConversation from "../components/StudentConversation";
 import StudentProgressTracking from "../components/StudentProgressTracking";
+import StudentPredictionCard from "../components/StudentPredictionCard";
 import {
   ArrowLeft,
-  Cpu,
   Trash2,
   AlertCircle,
   Loader2,
@@ -15,6 +15,7 @@ import {
   MessageSquare,
   TrendingUp,
   UserCheck,
+  Brain,
 } from "lucide-react";
 
 export default function StudentDetails() {
@@ -188,48 +189,74 @@ export default function StudentDetails() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex border-b border-slate-200 space-x-1 sm:space-x-3 text-xs sm:text-sm font-semibold">
+      <div className="flex border-b border-slate-200 space-x-1 sm:space-x-3 text-xs sm:text-sm font-semibold overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab("prediction")}
+          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 whitespace-nowrap transition ${
+            activeTab === "prediction"
+              ? "border-blue-600 text-blue-700"
+              : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
+          }`}
+        >
+          <Brain className="w-4 h-4 text-blue-600" />
+          AI Risk Assessment
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveTab("progress")}
-          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 transition ${
+          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 whitespace-nowrap transition ${
             activeTab === "progress"
               ? "border-blue-600 text-blue-700"
               : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
           }`}
         >
-          <TrendingUp className="w-4 h-4" />
+          <TrendingUp className="w-4 h-4 text-emerald-600" />
           Progress & Auto Comparison
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("conversation")}
-          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 transition ${
+          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 whitespace-nowrap transition ${
             activeTab === "conversation"
               ? "border-blue-600 text-blue-700"
               : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
           }`}
         >
-          <MessageSquare className="w-4 h-4" />
+          <MessageSquare className="w-4 h-4 text-indigo-600" />
           Student ↔ Counsellor Chat
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("profile")}
-          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 transition ${
+          className={`flex items-center gap-2 py-3 px-3.5 border-b-2 whitespace-nowrap transition ${
             activeTab === "profile"
               ? "border-blue-600 text-blue-700"
               : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
           }`}
         >
-          <UserCheck className="w-4 h-4" />
+          <UserCheck className="w-4 h-4 text-slate-600" />
           Academic Profile Card
         </button>
       </div>
 
       {/* Tab Contents */}
+      {activeTab === "prediction" && (
+        <section className="space-y-6">
+          <StudentPredictionCard
+            student={student}
+            onPredictionUpdated={(updatedPred) =>
+              setStudent((prev) => ({ ...prev, prediction: updatedPred }))
+            }
+          />
+          {/* Also include academic card below prediction for immediate context */}
+          <StudentCard student={student} />
+        </section>
+      )}
+
       {activeTab === "progress" && (
         <section className="space-y-6">
           <StudentProgressTracking
@@ -250,46 +277,6 @@ export default function StudentDetails() {
           <StudentCard student={student} />
         </section>
       )}
-
-      {/* AI Prediction Placeholder Notice */}
-      <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-              <Cpu className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                AI Prediction Status
-              </h2>
-              <p className="text-xs text-slate-500">
-                Machine Learning risk classification & inference engine
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">
-              AI Prediction: Coming Soon
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              ML Model: Not Connected
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-4 text-center py-6 px-4 bg-slate-50 rounded-lg border border-dashed border-slate-200 space-y-2">
-          <p className="text-sm font-medium text-slate-700 max-w-lg mx-auto">
-            Prediction will appear here after connecting the Machine Learning model.
-          </p>
-          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            All student parameters, conversations, and progress checkpoints are permanently
-            stored in MongoDB. The classification algorithm will evaluate these attributes and
-            output dropout risk categories in the ML phase.
-          </p>
-        </div>
-      </section>
     </div>
   );
 }
