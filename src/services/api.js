@@ -37,3 +37,7 @@ export const checkHealth = async () => {
 };
 
 export default apiClient;
+
+export const getModelStatus = async () => (await apiClient.get('/predictions/model-status')).data;
+export const getStudentPrediction = async (id) => (await apiClient.get(`/predictions/${id}`)).data;
+export const getPredictionSummary = async () => (await apiClient.get('/predictions/summary')).data;
