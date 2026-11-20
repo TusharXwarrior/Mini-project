@@ -34,7 +34,7 @@ app.use((req, res, next) => {
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "ok",
-    service: "Student Dropout Prediction Backend (Part 2)",
+    service: "EduRisk AI API",
     database:
       mongoose.connection.readyState === 1 ? "connected" : "disconnected",
   });
@@ -42,12 +42,7 @@ app.get("/api/health", (req, res) => {
 
 // Routes
 const studentRoutes = require("./routes/studentRoutes");
-const conversationRoutes = require("./routes/conversationRoutes");
-const progressRoutes = require("./routes/progressRoutes");
-
 app.use("/api/students", studentRoutes);
-app.use("/api/conversations", conversationRoutes);
-app.use("/api/progress", progressRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {
