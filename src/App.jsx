@@ -6,6 +6,7 @@ import StudentForm from "./pages/StudentForm";
 import Result from "./pages/Result";
 import Dashboard from "./pages/Dashboard";
 import StudentDetails from "./pages/StudentDetails";
+import RiskAnalysis from "./pages/RiskAnalysis";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
             <Route path="/result" element={<Result />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/students/:id" element={<StudentDetails />} />
+            <Route path="/risk-analysis" element={<RiskAnalysis />} />
             {/* Fallback */}
             <Route
               path="*"
