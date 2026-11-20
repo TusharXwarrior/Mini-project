@@ -1,165 +1,115 @@
-# AI-Based Student Dropout Prediction System
+# EduRisk AI — Student Dropout Risk Screening & Retention Support
 
-> **College Project Showcase Prototype**  
-> **Stage:** Part 2 — Fullstack Backend & Database Integration  
-> **Status:** Backend Connected & Live with MongoDB
+EduRisk AI is a student-support prototype with a React frontend, Node/Express API, MongoDB student records and a separate Python machine-learning service.
 
----
+## Project parts
+- **Part 1 — Frontend/data collection:** student intake form, validation and profile views.
+- **Part 2 — Backend/database:** student CRUD APIs and persistent MongoDB records.
+- **Part 3 — ML risk screening:** supervised Random Forest training from labelled historical data, inference API, individual risk view, cohort summary and transparent supportive next-step prompts.
+- **Conversation/progress module:** use the Conversations & Progress page when that feature is present in your checked-out branch; it stores counsellor/student messages and progress checkpoints.
 
-## 📌 Project Overview
+## Architecture
+- Frontend: React, Vite, React Router, Tailwind CSS, Axios.
+- Main API: Node.js 22+, Express, Mongoose.
+- Database: MongoDB / MongoDB Atlas.
+- ML service: Python 3.11, FastAPI, pandas, scikit-learn, joblib.
 
-This application serves as the data collection, institutional monitoring, and student retention analytics portal for an **AI-Based Student Dropout Prediction System**.
+## Run locally
 
-- **Part 1 (Frontend & Data Collection)**: Built the responsive React frontend, intake form with input boundary validations, and student profile preview.
-- **Part 2 (Backend & Database Integration)**: Built a REST API using Node.js, Express.js, and MongoDB with Mongoose to permanently store student records, manage student data, and display live database analytics.
-- **Part 3 (Upcoming)**: Machine Learning model training, inference pipeline, and AI dropout risk probability prediction.
+### 1. MongoDB
+Start local MongoDB or create an Atlas database. Set the connection string in `backend/.env`.
 
----
+### 2. Python ML service
+Use an institution-approved labelled dataset; do not use the example/demo student records as labelled training data.
 
-## 🚀 Tech Stack
-
-### Frontend
-- **React.js 19**: Component architecture & hooks
-- **Vite 8**: Frontend build tool & HMR dev server
-- **Tailwind CSS 4**: Modern styling
-- **React Router DOM 7**: Client routing
-- **Axios**: HTTP client for REST API communication
-- **Lucide React**: Educational iconography
-
-### Backend
-- **Node.js**: Runtime environment
-- **Express.js**: RESTful web API framework
-- **MongoDB**: NoSQL document database
-- **Mongoose**: ODM library with strict schema validation
-- **dotenv**: Environment variable management
-- **CORS**: Cross-origin resource sharing configuration
-
----
-
-## 📁 Project Structure
-
-```
-Mini project 02/
-├── backend/
-│   ├── models/
-│   │   └── Student.js          # Mongoose schema with validations
-│   ├── controllers/
-│   │   └── studentController.js # CRUD handlers & duplicate key checks
-│   ├── routes/
-│   │   └── studentRoutes.js    # Express route mappings
-│   ├── server.js               # Express application entry & MongoDB connection
-│   ├── .env                    # Environment variables (PORT, MONGODB_URI)
-│   ├── .env.example            # Environment template
-│   └── package.json            # Backend dependencies
-├── src/
-│   ├── components/
-│   │   ├── Navbar.jsx          # Header with branding & route navigation
-│   │   └── StudentCard.jsx     # Reusable student profile card
-│   ├── pages/
-│   │   ├── Home.jsx            # Landing page with system pillars
-│   │   ├── Dashboard.jsx       # Real-time dashboard connected to MongoDB
-│   │   ├── StudentForm.jsx     # Intake form posting to Express via Axios
-│   │   ├── StudentDetails.jsx  # Student details (/students/:id) from MongoDB
-│   │   └── Result.jsx          # Submission confirmation & status
-│   ├── services/
-│   │   └── api.js              # Centralized Axios API client
-│   ├── data/
-│   │   └── students.js         # Demo dataset & local fallback utilities
-│   ├── App.jsx                 # Route definitions including /students/:id
-│   ├── main.jsx                # Application root mounting
-│   └── index.css               # Tailwind CSS imports
-├── package.json                # Frontend dependencies
-└── vite.config.js              # Vite configuration with Tailwind plugin
-```
-
----
-
-## 📡 REST API Endpoints
-
-Base URL: `http://localhost:5000/api`
-
-| Method | Endpoint | Description | Response Codes |
-| --- | --- | --- | --- |
-| `GET` | `/health` | Health check & MongoDB connection status | 200 |
-| `GET` | `/students` | Get all students from database (sorted by createdAt) | 200, 500 |
-| `POST` | `/students` | Create & validate a new student record | 201, 400, 409, 500 |
-| `GET` | `/students/:id` | Get single student by MongoDB `_id` or `studentId` | 200, 404, 500 |
-| `DELETE` | `/students/:id` | Delete student by MongoDB `_id` or `studentId` | 200, 404, 500 |
-
-### Sample POST Request Body
-```json
-{
-  "studentId": "STU-2024-001",
-  "name": "Aarav Sharma",
-  "age": 20,
-  "gender": "Male",
-  "branch": "Computer Science",
-  "semester": "4th Semester",
-  "cgpa": 8.85,
-  "previousCgpa": 8.70,
-  "backlogs": 0,
-  "internalMarks": 44,
-  "attendance": 92,
-  "assignmentCompletion": 95,
-  "classesMissed": 6,
-  "scholarship": "Yes",
-  "feeStatus": "Paid"
-}
-```
-
----
-
-## 💻 How to Run the Project
-
-### 1. MongoDB Setup
-Ensure MongoDB Server is running locally on port `27017`:
-- On Windows: Run `Get-Service MongoDB` in PowerShell (or start via Services).
-- Connection string in `backend/.env`: `mongodb://127.0.0.1:27017/student_dropout_db`
-
-### 2. Start the Backend Server
 ```bash
-# In project root:
-npm --prefix backend start
+cd ml-service
+python -m venv .venv
+# Windows PowerShell: .venv\\Scripts\\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-# Or navigate directly:
+Copy `data/training_template.csv` to `data/training_data.csv`, then fill the rows with historical examples whose eventual outcome is known:
+- `dropout=1`: student subsequently dropped out.
+- `dropout=0`: student remained enrolled/completed the defined observation period.
+
+Train and inspect the metrics:
+```bash
+python train_model.py --data data/training_data.csv
+```
+The trainer requires at least 50 rows, both classes and at least 5 examples per class. This is only a minimum demo guardrail; 500+ representative records and a time-based, cohort-held-out evaluation are recommended. The generated `artifacts/` directory is intentionally git-ignored. Keep the model artifact available to the ML service at runtime (deploy it through a private artifact store or a controlled build process).
+
+Start the ML API:
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+Check `http://localhost:8000/health` and `/model-info`.
+
+### 3. Node backend
+```bash
 cd backend
 npm install
-npm start
+cp .env.example .env
 ```
-Backend will start on: `http://localhost:5000`
+Set:
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/student_dropout_db
+CLIENT_ORIGIN=http://localhost:5173
+ML_SERVICE_URL=http://127.0.0.1:8000
+```
+Then run `npm run dev` (or `npm start`).
 
-### 3. Start the Frontend Application
-In a separate terminal:
+### 4. React frontend
+From the repository root:
 ```bash
 npm install
+cp .env.example .env
 npm run dev
 ```
-Frontend will be live at: `http://localhost:5173`
+Set `VITE_API_BASE_URL=http://localhost:5000/api`. Open the Vite URL.
 
----
+## Part 3 workflow
+1. Register a student using the intake form. The existing form collects all model input features.
+2. Ensure the ML service has a trained artifact and is running.
+3. Open a student's profile. The AI Dropout Risk Assessment panel calls the backend prediction API.
+4. Open **Risk Analysis** in the navigation for a cohort-wide summary.
+5. Review the suggested supportive prompts and contact the student to understand the underlying situation. A model score must never replace a human conversation.
 
-## 🧭 Tested End-to-End User Flow
+## API endpoints
+Main Node API:
+- `GET /api/health`
+- Existing student CRUD: `/api/students`
+- `GET /api/predictions/model-status`
+- `GET /api/predictions/summary`
+- `GET /api/predictions/:id` — MongoDB ObjectId or studentId
 
-1. Open `http://localhost:5173/` (Home page).
-2. Click **"Check Student Risk"** → navigates to `/student-form`.
-3. Submit student details or click **"Fill Demo"**:
-   - Form posts data to `POST http://localhost:5000/api/students` via Axios.
-   - Shows success notification: *"Student data saved successfully."*
-4. Automatically navigates to `/result` showing the submitted profile and the placeholder:
-   - `ML Model: Not Connected` / `AI Prediction: Coming Soon`.
-5. Open `/dashboard`:
-   - Live **Total Students** count loaded directly from MongoDB.
-   - Student records listed with real data: `Student ID | Student Name | Branch | Semester | CGPA | Attendance | Backlogs`.
-6. Click any student row or action icon → Opens `/students/:id`:
-   - Fetches the persistent record from MongoDB.
-   - Retains the clear `AI Prediction: Coming Soon` notice.
-7. Click **"Delete Student"** → Calls `DELETE /api/students/:id`, removes the document from MongoDB, and returns to Dashboard.
+Python ML API:
+- `GET /health`
+- `GET /model-info`
+- `POST /reload`
+- `POST /predict`
 
----
+## Model and evaluation notes
+- Model: scikit-learn Pipeline with median/mode imputation, one-hot encoding and class-weighted Random Forest.
+- The training script prints accuracy, precision, recall, F1 and ROC-AUC on a stratified hold-out split.
+- Probability bands are illustrative defaults: Low <40%, Medium 40–69.99%, High >=70%. They are not calibrated or validated intervention thresholds.
+- The supportive prompts are transparent rules based on attendance, CGPA trend, assignment completion, backlogs and fee status. They are not feature attribution or an explanation of why the model predicted a given score.
+- Missing prediction results are shown as unavailable, never silently classified as low risk.
 
-## 🔮 What Will Be Implemented in Part 3
+## Deployment (Render)
+The root `render.yaml` defines three services: Node API, Python ML API and static frontend. Before deploying:
+1. Create MongoDB Atlas and configure the backend `MONGODB_URI`.
+2. Set backend `CLIENT_ORIGIN` to the exact deployed frontend origin.
+3. Set backend `ML_SERVICE_URL` to the deployed Python ML service URL.
+4. Set frontend `VITE_API_BASE_URL` to the deployed Node API URL plus `/api`.
+5. Ensure the trained model artifact is placed at `ml-service/artifacts/dropout_model.joblib` and its metadata JSON alongside it. Do not commit private student data or secrets.
+6. Verify all three health checks and run one end-to-end prediction with a test record before presenting the system.
 
-- **Machine Learning Model Integration**: Training a supervised classification model (e.g., Random Forest or Logistic Regression) using student training data.
-- **Prediction API Endpoint**: Creating `POST /api/predict` or attaching prediction inference directly to student records.
-- **Risk Calculation**: Generating risk scores (Low, Medium, High Risk) and percentage probability of dropout.
-- **Intervention Recommendations**: Visual indicators and early warning recommendations for academic advisors.
+The ML artifact is not included in Git because no labelled dataset was supplied. Therefore the ML service correctly reports "model not loaded" until you train and deploy a real model. A working build/deployment cannot honestly be claimed until this data-dependent step and live environment checks are completed.
+
+## Privacy, security and responsible use
+This is a prototype and the existing repository does not yet enforce authenticated student/counsellor/admin identities. A view selector is not access control. Do not expose real student records publicly. Before production, implement server-side authentication, role-based authorization, student ownership checks, rate limits, audit trails, consent/privacy notices, retention rules, HTTPS and restricted database/network access.
+
+Dropout labels and model scores can be biased by institutional conditions and incomplete data. Exclude sensitive/protected attributes, check data quality and subgroup performance, evaluate calibration and false-negative rates on later cohorts, and keep a qualified human in the loop. Never use the score alone for admission, grading, scholarship, discipline or other high-impact decisions.
