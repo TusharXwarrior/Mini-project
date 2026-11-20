@@ -1,31 +1,36 @@
 services:
-  # Express Backend Web Service
   - type: web
-    name: student-dropout-backend
-    env: node
-    plan: free
+    name: edurisk-api
+    runtime: node
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
-      - key: PORT
-        value: 5000
+      - key: NODE_ENV
+        value: production
       - key: MONGODB_URI
         sync: false
       - key: CLIENT_ORIGIN
         sync: false
-
-  # React Vite Frontend Static Site
-  - type: static
-    name: student-dropout-frontend
-    env: static
-    plan: free
+      - key: ML_SERVICE_URL
+        value: https://REPLACE-WITH-ML-SERVICE.onrender.com
+  - type: web
+    name: edurisk-ml
+    runtime: python
+    rootDir: ml-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+  - type: web
+    name: edurisk-web
+    runtime: static
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://REPLACE-WITH-BACKEND.onrender.com/api
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
-    envVars:
-      - key: VITE_API_BASE_URL
-        sync: false
